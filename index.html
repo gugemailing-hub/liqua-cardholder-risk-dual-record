@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>持卡人解除风控调整为双录 · 原型</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f4f5f7; color: #1f2329;
+         font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  header { background: #fff; border-bottom: 1px solid #e5e6eb; padding: 12px 24px; font-size: 13px; color: #4e5969; }
+  header b { color: #1f2329; font-size: 15px; margin-right: 10px; }
+
+  nav { display: flex; gap: 22px; flex-wrap: wrap; padding: 14px 24px 0; }
+  .grp { display: flex; align-items: center; gap: 8px; }
+  .glabel { font-size: 12px; font-weight: 600; color: #d46b08; }
+  nav button { font-size: 13px; padding: 6px 14px; border-radius: 6px; background: #fff; cursor: pointer;
+               border: 1px solid #fa8c16; color: #d46b08; }
+  nav button.on { background: #fa8c16; color: #fff; }
+
+  main { display: flex; gap: 28px; padding: 14px 24px 40px; align-items: flex-start; flex-wrap: wrap; }
+  .stage { width: 377px; }
+  .stage.wide { width: 920px; }
+  .statebar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .statebar span { font-size: 12px; color: #86909c; align-self: center; }
+  .statebar button { font-size: 12px; padding: 4px 10px; border: 1px solid #c9cdd4; border-radius: 14px;
+                     background: #fff; color: #4e5969; cursor: pointer; }
+  .statebar button.on { border-color: #2f6fe4; background: #e8f0fe; color: #2f6fe4; }
+  #bars { margin-bottom: 6px; min-height: 28px; }
+
+  /* 手机外框：toast 以它为定位基准，滚动区不设 position */
+  .phone { position: relative; width: 377px; height: 720px; background: #fff; border: 1px solid #d0d3d9;
+           border-radius: 26px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+  .ptop { height: 52px; display: flex; align-items: center; justify-content: space-between;
+          padding: 0 14px; border-bottom: 1px solid #e8e8e8; background: #ededed; }
+  .ptop .tt { text-align: center; line-height: 1.25; }
+  .ptop .tt b { display: block; font-size: 15px; font-weight: 600; }
+  .ptop .tt i { display: block; font-style: normal; font-size: 10.5px; color: #777; }
+  .ptop .nav-btn { width: 30px; font-size: 20px; color: #333; cursor: pointer; user-select: none; }
+  .ptop .nav-btn.r { text-align: right; font-size: 16px; }
+  .pbody { height: calc(100% - 52px); overflow-y: auto; }
+
+  /* 意愿确认页：按入网「意愿确认」现状截图还原 */
+  .will { background: #f4f5f7; padding: 10px 12px; }
+  .will .card { background: #fff; border-radius: 8px; padding: 26px 16px 18px; text-align: center; }
+  .will .tip { font-size: 14px; color: #333; }
+  .will .pic { width: 170px; height: 150px; margin: 22px auto 10px; position: relative; }
+  .will .pic svg { width: 100%; height: 100%; }
+  .will .agree { display: flex; gap: 6px; align-items: flex-start; text-align: left; font-size: 12px; color: #666;
+                 line-height: 1.6; margin: 26px 0 12px; cursor: pointer; }
+  .will .agree .ck { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #c0c4cc; flex-shrink: 0; margin-top: 2px;
+                     display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+  .will .agree .ck.on { background: #1677ff; border-color: #1677ff; }
+  .will .agree a { color: #1677ff; text-decoration: none; }
+  .will .btn { background: #1677ff; color: #fff; font-size: 15px; padding: 12px 0; border-radius: 22px; cursor: pointer; }
+  .will .safe { font-size: 11.5px; color: #888; margin-top: 12px; }
+  .will .safe em { font-style: normal; color: #00b42a; margin-right: 4px; }
+
+  /* 双录页（腾讯核身页）：按入网双录现状截图还原 */
+  .rec { background: #fff; padding: 24px 18px; text-align: center; }
+  .rec h4 { margin: 0 0 22px; font-size: 18px; }
+  .rec .face { width: 196px; height: 196px; margin: 0 auto; border-radius: 50%; border: 4px solid #3f51b5;
+               background: radial-gradient(circle at 50% 38%, #d9dde6 0 28%, transparent 29%),
+                           radial-gradient(ellipse at 50% 92%, #c3c8d4 0 45%, transparent 46%), #eef0f5; }
+  .rec .say { color: #888; font-size: 14px; margin: 18px 0 26px; }
+  .rec .box { background: #eef0fb; color: #3949ab; border-radius: 12px; padding: 16px 16px 12px; text-align: left;
+              font-size: 14.5px; line-height: 1.75; }
+  .rec .box .vo { text-align: center; color: #3949ab; font-size: 16px; margin-top: 8px; }
+  .rec .var { color: #c41d7f; font-weight: 600; }
+
+  /* 占位页：后续流程不改 */
+  .holder { height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;
+            padding: 0 30px; color: #86909c; font-size: 14px; line-height: 1.8; background: #f4f5f7; }
+
+  .toast { position: absolute; left: 50%; top: 48%; transform: translateX(-50%); background: rgba(0,0,0,.78);
+           color: #fff; font-size: 14px; padding: 10px 16px; border-radius: 8px; white-space: nowrap; }
+
+  /* 管理平台：按审核详情现状截图还原 */
+  .admin { width: 920px; background: #fff; border: 1px solid #d0d3d9; border-radius: 6px; overflow: hidden; font-size: 12.5px; }
+  .atop { height: 46px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #eee; }
+  .atop .logo { font-size: 15px; font-weight: 600; margin-right: 60px; }
+  .atop .logo em { font-style: normal; color: #1f6ff2; margin-right: 4px; }
+  .atop .mn { margin-right: 26px; color: #333; }
+  .atop .mn.on { color: #1f6ff2; border-bottom: 2px solid #1f6ff2; padding: 13px 0; }
+  .atop .who { margin-left: auto; color: #666; }
+  .abody { display: flex; }
+  .aside { width: 150px; border-right: 1px solid #eee; padding: 8px 0; color: #333; }
+  .aside div { padding: 9px 16px; }
+  .aside .grp-on { color: #1f6ff2; }
+  .aside .sel { background: #eef4ff; color: #1f6ff2; border-right: 2px solid #1f6ff2; padding-left: 28px; }
+  .aside .sub { padding-left: 28px; }
+  .amain { flex: 1; padding: 10px 14px 18px; background: #fafafa; min-width: 0; }
+  .atabs { display: flex; gap: 18px; color: #666; padding: 4px 0 10px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
+  .atabs .on { color: #1f6ff2; }
+  .panel { background: #fff; border: 1px solid #e5e6eb; margin-bottom: 12px; }
+  .panel > .ph { background: #f2f3f5; padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #e5e6eb; }
+  .kv { width: 100%; border-collapse: collapse; }
+  .kv td { border: 1px solid #ebedf0; padding: 7px 10px; }
+  .kv td.k { background: #f7f8fa; font-weight: 600; text-align: center; width: 110px; }
+  .grid-t { width: 100%; border-collapse: collapse; }
+  .grid-t th, .grid-t td { border-bottom: 1px solid #ebedf0; padding: 8px 10px; text-align: left; }
+  .grid-t th { background: #fafafa; font-weight: 600; }
+  .appeal { display: flex; padding: 14px; gap: 20px; }
+  .appeal .ph-box { width: 120px; border: 1px solid #e5e6eb; text-align: center; padding: 6px 6px 4px; align-self: flex-start; }
+  .appeal .ph-box .img { height: 96px; background: linear-gradient(160deg, #cfd5df, #9aa4b5); margin-bottom: 4px; }
+  .appeal .fields { margin-left: auto; width: 420px; }
+  .appeal .fields div { display: flex; border-bottom: 1px dashed #e5e6eb; padding: 7px 4px; }
+  .appeal .fields b { width: 110px; flex-shrink: 0; }
+  .radios { text-align: right; color: #888; padding: 4px 14px 12px; }
+  .link { color: #1f6ff2; cursor: pointer; }
+  .av td.k { width: 160px; }
+
+  /* 标注：红色虚线框 = 新增，橙底 = 调整 */
+  .mark-add { outline: 1.5px dashed #f5222d; outline-offset: 2px; }
+  .mark-mod { background: #fff7e6 !important; outline: 1px dashed #fa8c16; outline-offset: 2px; }
+
+  .notes { flex: 1; min-width: 340px; max-width: 660px; background: #fff; border: 1px solid #e5e6eb;
+           border-radius: 10px; padding: 16px 20px; font-size: 13px; line-height: 1.8; }
+  .notes h3 { font-size: 15px; margin: 0 0 8px; }
+  .notes h4 { font-size: 13px; margin: 14px 0 4px; color: #1f2329; }
+  .notes ol { margin: 0; padding-left: 18px; }
+  .notes table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+  .notes th, .notes td { border: 1px solid #e5e6eb; padding: 5px 8px; text-align: left; vertical-align: top; }
+  .notes th { background: #f0f2f5; }
+  .notes .pend { color: #d46b08; }
+  .legend { font-size: 13px; color: #1f2329; margin: 0 0 12px; padding: 8px 12px; background: #f7f8fa; border-radius: 6px; }
+  .legend span { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin: 0 5px 0 14px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header><b>持卡人解除风控调整为双录</b>原型 V1.3 ｜ 2026/10/26</header>
+
+<nav>
+  <div class="grp">
+    <span class="glabel">现有页面改动 2 个</span>
+    <button data-tab="h5">公众号－持卡人意愿确认</button>
+    <button data-tab="admin">管理平台－申诉审核详情</button>
+  </div>
+</nav>
+
+<main>
+  <section class="stage" id="stage">
+    <div id="bars"></div>
+    <div id="device"></div>
+  </section>
+  <aside class="notes" id="notes"></aside>
+</main>
+
+<script>
+// 示例值，一眼可辨为假数据
+var TX = { time: '2026年10月20日14时57分', amt: '5000.00元' };
+
+var REC_RESULTS = ['通过', '未通过'];
+var RECORDS = ['上线后新生成的申诉', '上线前已生成的申诉'];
+
+var app = { tab: 'h5', stack: ['will'], agreed: false, toast: '', record: RECORDS[0] };
+var timer = null;
+
+var FACE_SVG = '<svg viewBox="0 0 170 150"><path d="M20 30v-14h14M136 16h14v14M20 120v14h14M150 120v14h-14" fill="none" stroke="#1677ff" stroke-width="3"/>' +
+  '<g fill="#1677ff" opacity=".85"><rect x="40" y="10" width="3" height="14"/><rect x="48" y="6" width="3" height="22"/><rect x="56" y="12" width="3" height="10"/>' +
+  '<rect x="111" y="8" width="3" height="18"/><rect x="119" y="12" width="3" height="10"/><rect x="127" y="6" width="3" height="22"/></g>' +
+  '<rect x="30" y="34" width="110" height="92" fill="#e6f0ff"/>' +
+  '<circle cx="85" cy="70" r="20" fill="#5b6475"/><path d="M45 126c4-24 20-34 40-34s36 10 40 34z" fill="#8aa6d6"/>' +
+  '<line x1="30" y1="84" x2="140" y2="84" stroke="#1677ff" stroke-width="1.5"/>' +
+  '<circle cx="85" cy="134" r="9" fill="#1677ff"/><rect x="82" y="128" width="6" height="9" rx="3" fill="#fff"/></svg>';
+
+function willHtml() {
+  return '<div class="card mark-mod">' +
+    '<div class="tip">请勿遮挡面部，开启麦克风，正对光源</div>' +
+    '<div class="pic">' + FACE_SVG + '</div>' +
+    '<div class="agree" data-act="agree"><span class="ck' + (app.agreed ? ' on' : '') + '">' + (app.agreed ? '✓' : '') + '</span>' +
+    '<span>我已知晓并同意通过人脸信息核验身份，查看<a>《人脸识别服务协议》</a></span></div>' +
+    '<div class="btn" data-act="start">人脸识别意愿确认</div>' +
+    '<div class="safe"><em>●</em>信息已加密处理，仅用于身份验证</div></div>';
+}
+
+function recHtml() {
+  return '<h4>请倾听并确认框内文字</h4><div class="face"></div><div class="say">请大声说话</div>' +
+    '<div class="box mark-add">本笔交易仅限持卡人本人办理。请核对<span class="var">' + TX.time + '</span>，' +
+    '<span class="var">' + TX.amt + '</span>的交易系您本人发起。确认即视为您认可该交易、授权嘉联按此结算至商户，' +
+    '交易后果由您承担。若您知晓并确认，请回答：确认。<div class="vo">◀))</div></div>';
+}
+
+function holder(text) { return function () { return '<div class="holder">' + text + '</div>'; }; }
+
+var PAGES = {
+  will: { title: '意愿确认', host: 'help.jlpay.com', cls: 'will', render: willHtml },
+  rec:  { title: '人脸验证', host: 'kyc.qcloud.com', cls: 'rec', render: recHtml },
+  ok:   { title: '结果', host: 'help.jlpay.com', cls: '', render: holder('与原有逻辑相同，进入下一步操作') },
+  fail: { title: '人脸验证', host: 'kyc.qcloud.com', cls: '', render: holder('与入网意愿确认的双录失败处理逻辑相同') }
+};
+
+function bar(label, list, cur, kind) {
+  return '<div class="statebar"><span>' + label + '：</span>' + list.map(function (s) {
+    return '<button data-' + kind + '="' + s + '"' + (s === cur ? ' class="on"' : '') + '>' + s + '</button>';
+  }).join('') + '</div>';
+}
+
+function cur() { return app.stack[app.stack.length - 1]; }
+
+function renderBars() {
+  var html = '';
+  if (app.tab === 'h5' && cur() === 'rec') html = bar('双录结果', REC_RESULTS, '', 'res');
+  if (app.tab === 'admin') html = bar('申诉记录', RECORDS, app.record, 'rec');
+  document.getElementById('bars').innerHTML = html;
+}
+
+function renderPhone() {
+  var p = PAGES[cur()];
+  var back = app.stack.length > 1 ? '<span class="nav-btn" data-act="back">‹</span>' : '<span class="nav-btn"></span>';
+  var tst = app.toast ? '<div class="toast">' + app.toast + '</div>' : '';
+  return '<div class="phone"><div class="ptop">' + back + '<span class="tt"><b>' + p.title + '</b><i>' + p.host + '</i></span>' +
+         '<span class="nav-btn r" data-act="close">✕</span></div>' +
+         '<div class="pbody ' + p.cls + '">' + p.render() + '</div>' + tst + '</div>';
+}
+
+function renderAdmin() {
+  var isNew = app.record === RECORDS[0];
+  var f = function (k, v, mk) { return '<div' + (mk ? ' class="' + mk + '"' : '') + '><b>' + k + '</b><span>' + v + '</span></div>'; };
+  var fields = f('持卡人姓名', '张三') + f('持卡人证件号码', '110101********0011') +
+    (isNew ? f('意愿人脸相似度', '96.24', 'mark-mod') : f('人脸识别结果', '93.39')) +
+    (isNew ? f('用户回答内容', '确认', 'mark-add') : '') +
+    f('解冻交易卡号', '622200******0000') + f('解冻金额', '5,000.00') + f('风控原因', '交易存在异常') +
+    f('申诉位置', '广东省深圳市南山区示例路1号') + f('累计申诉次数', '1') + f('申诉原因', '-') + f('处置措施', '止付（单笔）');
+  var photo = '<div class="ph-box' + (isNew ? ' mark-mod' : '') + '"><div class="img"></div>' + (isNew ? '人脸核身照片' : '附件') + '</div>';
+  var av = isNew ? '<div class="panel av mark-add"><div class="ph">音视频链接</div><table class="kv"><tr>' +
+    '<td class="k">意愿核验视频链接</td><td><span class="link">意愿核验视频</span></td></tr></table></div>' : '';
+  return '<div class="admin">' +
+    '<div class="atop"><span class="logo"><em>◀</em>嘉联支付 · 基础运营</span><span class="mn on">服务中心</span>' +
+    '<span class="mn">安全中心</span><span class="mn">消息中心</span><span class="mn">配置中心</span><span class="who">欢迎登录！</span></div>' +
+    '<div class="abody"><div class="aside"><div>基础设置</div><div>任务管理</div><div class="grp-on">流程查询</div>' +
+    '<div class="sel">工作流记录</div><div class="sub">工单记录</div><div>业务处理</div><div>业务场景</div></div>' +
+    '<div class="amain"><div class="atabs"><span>首页</span><span>工作流记录</span><span>工作流流程详情</span><span class="on">审核详情</span></div>' +
+    '<div class="panel"><div class="ph">工单信息</div><table class="kv">' +
+    '<tr><td class="k">流程编号</td><td>2026102099999001</td><td class="k">流程名称</td><td>mpos商户风险申诉审核流程</td></tr>' +
+    '<tr><td class="k">实体类型</td><td>商户</td><td class="k">实体名称</td><td>M100000000000001</td></tr></table></div>' +
+    '<div class="panel"><div class="ph">交易信息</div><table class="grid-t"><tr><th>交易订单号</th><th>交易时间</th><th>交易状态</th><th>终端号</th><th>交易卡号</th><th>交易金额</th></tr>' +
+    '<tr><td>2026102099990001</td><td>2026-10-20 14:57:11</td><td>成功</td><td>T0000001</td><td>622200******0000</td><td>5,000.00</td></tr></table></div>' +
+    '<div class="panel"><div class="ph">申诉信息</div><div class="appeal">' + photo + '<div class="fields">' + fields + '</div></div>' +
+    '<div class="radios">○ 审核通过　○ 审核不通过</div></div>' + av +
+    '</div></div></div>';
+}
+
+var LEGEND = '<div class="legend"><b>图例</b><span style="outline:1.5px dashed #f5222d"></span>红色虚线框 = 新增' +
+             '<span style="background:#fff7e6;outline:1px dashed #fa8c16"></span>橙底 = 调整</div>';
+
+var NOTES = {
+  h5: '<h3>公众号－持卡人意愿确认（改动页）</h3>' +
+    '<h4>页面路径</h4><ol><li>公众号首页 → 在线客服 → 我的客服 → 工具与服务「异常交易处理」→ 异常处理列表（待处理）→ 持卡人身份验证（不改）→ <b>本页</b>。</li></ol>' +
+    '<h4>适用范围</h4><ol><li>上线后新生成的持卡人风控异常记录，身份验证通过后进入本页；上线前已生成的记录（含待处理）仍进入原「人脸认证」页。</li></ol>' +
+    '<h4>改动</h4><table><tr><th>位置</th><th>修改前</th><th>修改后</th></tr>' +
+    '<tr><td>身份验证通过后的页面</td><td>「人脸认证」页：采集持卡人人脸</td><td>换成「意愿确认」页，页面样式、授权勾选与《人脸识别服务协议》、未勾选时的交互，均与入网意愿确认相同</td></tr>' +
+    '<tr><td>【人脸识别意愿确认】</td><td>【开始人脸识别】</td><td>进入双录页，持卡人倾听播报并口头回答</td></tr>' +
+    '<tr><td>双录播报文案（红框）</td><td>无</td><td>1、文案为法务定稿原文，不得改字；<br>2、时间取触发风控那笔交易的交易时间，格式「2026年10月20日14时57分」（不补零）；<br>3、金额取该笔交易金额，格式「5000.00元」；<br>4、回答词为「确认」</td></tr>' +
+    '<tr><td>双录未通过</td><td>—</td><td>与入网意愿确认的双录失败处理逻辑相同</td></tr>' +
+    '<tr><td>双录通过</td><td>人脸认证通过后解除风控</td><td>双录通过等同原人脸认证通过，后续解除风控与结果页与原有逻辑相同</td></tr></table>' +
+    '<h4 class="pend">待技术确定</h4><ol>' +
+    '<li>播报文案必须在 1 段内播完，不拆段。模板原文（含时间、金额占位）84 字；填入变量后为 94～103 字。若双录模板或渠道对单段播报有 100 字上限：优先放宽上限，放宽不了再请法务删减字数。</li></ol>',
+  admin: '<h3>管理平台－mpos商户风险申诉审核流程－审核详情（改动页）</h3>' +
+    '<h4>页面路径</h4><ol><li>基础运营 → 服务中心 → 流程查询 → 工作流记录 → 工作流流程详情 → 审核详情（流程名称：mpos商户风险申诉审核流程）。</li></ol>' +
+    '<h4>改动（只改申诉信息区，新增音视频链接模块）</h4><table><tr><th>位置</th><th>修改前</th><th>修改后</th></tr>' +
+    '<tr><td>左侧照片</td><td>附件：人脸照片</td><td>人脸核身照片：取双录过程中截取的人脸核身照片</td></tr>' +
+    '<tr><td>人脸识别结果</td><td>人脸比对分数</td><td>改名「意愿人脸相似度」，取双录返回的人脸比对分数</td></tr>' +
+    '<tr><td>用户回答内容</td><td>无</td><td>新增，取双录语音识别出的回答文字</td></tr>' +
+    '<tr><td>音视频链接</td><td>无</td><td>新增模块，一行「意愿核验视频链接｜意愿核验视频」，样式与电签版双录审核流程的审核详情相同；点击在线播放视频和声音，不另加下载按钮</td></tr></table>' +
+    '<ol><li>持卡人双录视频只挂在申诉工作流上，不写入子商户附件信息。</li>' +
+    '<li>上线前已生成的申诉记录：申诉信息区按原样展示，不展示音视频链接模块（上方切换「上线前已生成的申诉」查看）。</li></ol>',
+  adminOld: '<h3>管理平台－mpos商户风险申诉审核流程－审核详情</h3>' +
+    '<ol><li>上线前已生成的申诉记录：页面与原有逻辑相同，没有改动。</li></ol>'
+};
+
+function render() {
+  document.querySelectorAll('nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === app.tab); });
+  document.getElementById('stage').className = 'stage' + (app.tab === 'admin' ? ' wide' : '');
+  renderBars();
+  document.getElementById('device').innerHTML = app.tab === 'admin' ? renderAdmin() : renderPhone();
+  var old = app.tab === 'admin' && app.record === RECORDS[1];
+  document.getElementById('notes').innerHTML = old ? NOTES.adminOld : LEGEND + NOTES[app.tab];
+}
+
+function back() { if (app.stack.length > 1) app.stack.pop(); }
+
+function openTab(tab) { app.tab = tab; app.stack = ['will']; app.agreed = false; app.toast = ''; render(); }
+
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-tab],[data-res],[data-rec],[data-act]');
+  if (!t) return;
+  if (t.dataset.tab) return openTab(t.dataset.tab);
+  if (t.dataset.res) { app.stack.push(t.dataset.res === '通过' ? 'ok' : 'fail'); return render(); }
+  if (t.dataset.rec) { app.record = t.dataset.rec; return render(); }
+  var a = t.dataset.act;
+  if (a === 'back') back();
+  if (a === 'close') { app.stack = ['will']; app.agreed = false; }
+  if (a === 'agree') app.agreed = !app.agreed;
+  if (a === 'start' && app.agreed) app.stack.push('rec');
+  render();
+});
+
+// 支持 #h5 / #admin 直达页面，需求文档里按页面给链接
+var START = location.hash.slice(1);
+openTab(['h5', 'admin'].indexOf(START) >= 0 ? START : 'h5');
+</script>
+</body>
+</html>
